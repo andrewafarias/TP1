@@ -69,7 +69,7 @@ def add_city_distances(
     lastpos = len(route) - 1
     city = route[pos]
 
-    # Calcula os deltas de uma remoção; de forma modular se for tour.
+    # Calcula os deltas de uma adição; de forma modular se for tour.
     if pos-1 >= 0:
         current_total_distance += dist_matrix[route[pos-1], city]
     elif tour:
