@@ -17,7 +17,7 @@ def parse_to_distance_matrix(filepath: str) -> np.ndarray:
         sys.exit(1)
 
 
-def calculate_total_distance(route: List[int], dist_matrix: np.ndarray, tour: bool) -> float:
+def calculate_total_distance(route: List[int], dist_matrix: np.ndarray, tour: bool = True) -> float:
     total_distance = 0.0
     
     for i in range(len(route)-1):
@@ -129,3 +129,6 @@ if __name__ == '__main__':
         for (j, cj) in enumerate(ci):
             print(f'(C{j} {cj:.2f})', end=' ')
         print()
+
+    print('====================\n')
+
