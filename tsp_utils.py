@@ -39,48 +39,47 @@ def remove_city_distances(
         route: List[int],
         pos: int,
         dist_matrix: np.ndarray,
-        current_total_distance: float,
         tour: bool = True
         ) -> float:
     lastpos = len(route) - 1
     city = route[pos]
+    delta = 0.0
 
     # Calcula os deltas de uma remoção; de forma modular se for tour.
     if pos-1 >= 0:
-        current_total_distance -= dist_matrix[route[pos-1], city]
+        delta -= dist_matrix[route[pos-1], city]
     elif tour:
-        current_total_distance -= dist_matrix[route[lastpos], city]
+        delta -= dist_matrix[route[lastpos], city]
 
     if pos+1 <= lastpos:
-        current_total_distance -= dist_matrix[city, route[pos+1]]
+        delta -= dist_matrix[city, route[pos+1]]
     elif tour:
-        current_total_distance -= dist_matrix[city, route[0]]
+        delta -= dist_matrix[city, route[0]]
 
-    return current_total_distance
+    return delta
 
 
 def add_city_distances(
         route: List[int],
         pos: int,
         dist_matrix: np.ndarray,
-        current_total_distance: float,
         tour: bool = True
         ) -> float:
     lastpos = len(route) - 1
     city = route[pos]
-
+    delta = 0.0
     # Calcula os deltas de uma adição; de forma modular se for tour.
     if pos-1 >= 0:
-        current_total_distance += dist_matrix[route[pos-1], city]
+        delta += dist_matrix[route[pos-1], city]
     elif tour:
-        current_total_distance += dist_matrix[route[lastpos], city]
+        delta += dist_matrix[route[lastpos], city]
 
     if pos+1 <= lastpos:
-        current_total_distance += dist_matrix[city, route[pos+1]]
+        delta += dist_matrix[city, route[pos+1]]
     elif tour:
-        current_total_distance += dist_matrix[city, route[0]]
+        delta += dist_matrix[city, route[0]]
 
-    return current_total_distance
+    return delta
 
 def swap_cities(
         route: List[int],
@@ -112,15 +111,13 @@ def swap_cities(
     # Remove as cidades da rota e depois as adiciona nos lugares da inversão (contando os deltas em cada passo)
     # Obs: o erro que ocorre na fase de remoção no caso de posições adjacentes é compensado na fase de adição.
     new_total_distance = current_total_distance
-    new_total_distance = remove_city_distances(route, pos1, dist_matrix, new_total_distance, tour)
-    new_total_distance = remove_city_distances(route, pos2, dist_matrix, new_total_distance, tour)
-    if abs(pos1 - pos2) == 1:
-        new_total_distance -= dist_matrix[route[pos1], route[pos2]]
+    new_total_distance += remove_city_distances(route, pos1, dist_matrix, tour)
+    new_total_distance += remove_city_distances(route, pos2, dist_matrix, tour)
 
     swap_positions(route, pos1, pos2)
 
-    new_total_distance = add_city_distances(route, pos1, dist_matrix, new_total_distance, tour)
-    new_total_distance = add_city_distances(route, pos2, dist_matrix, new_total_distance, tour)
+    new_total_distance += add_city_distances(route, pos1, dist_matrix, tour)
+    new_total_distance += add_city_distances(route, pos2, dist_matrix, tour)
 
     return new_total_distance
 
