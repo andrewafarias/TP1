@@ -117,4 +117,23 @@ if __name__ == '__main__':
         print()
 
     print('====================\n')
+    
+    print('Gerando rota de tamanho 4...')
+    
+    n: int = len(dist_matrix)
+    permutation: List[int] = np.random.permutation(n).tolist()
+    route: List[int] = permutation[:4]
+
+    print("Rota:", route)
+    distance: float = calculate_total_distance(route, dist_matrix)
+    print(f"Distância: {distance:.2f}")
+
+    print("Trocando 1a cidade com 2a cidade...")
+    
+    new_distance = swap_cities(route, 0, 1, distance, dist_matrix)
+
+    print("Nova rota:", route)
+    print(f"Nova distância: {new_distance:.2f}")
+
+
 
