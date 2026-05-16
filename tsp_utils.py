@@ -18,6 +18,9 @@ def parse_to_distance_matrix(filepath: str) -> np.ndarray:
 
 
 def calculate_total_distance(route: List[int], dist_matrix: np.ndarray, tour: bool = True) -> float:
+    """
+    Calcula a distância total de uma rota. O(n).
+    """
     total_distance = 0.0
     
     for i in range(len(route)-1):
@@ -30,41 +33,24 @@ def calculate_total_distance(route: List[int], dist_matrix: np.ndarray, tour: bo
 
 
 def swap_positions(route: List[int], pos1: int, pos2: int) -> None:
+    """
+    Troca duas cidades de posição.
+    """
     aux = route[pos1]
     route[pos1] = route[pos2]
     route[pos2] = aux
 
 
-def remove_city_distances(
+def neighbors_distances(
         route: List[int],
         pos: int,
         dist_matrix: np.ndarray,
         tour: bool = True
         ) -> float:
-    lastpos = len(route) - 1
-    city = route[pos]
-    delta = 0.0
-
-    # Calcula os deltas de uma remoção; de forma modular se for tour.
-    if pos-1 >= 0:
-        delta -= dist_matrix[route[pos-1], city]
-    elif tour:
-        delta -= dist_matrix[route[lastpos], city]
-
-    if pos+1 <= lastpos:
-        delta -= dist_matrix[city, route[pos+1]]
-    elif tour:
-        delta -= dist_matrix[city, route[0]]
-
-    return delta
-
-
-def add_city_distances(
-        route: List[int],
-        pos: int,
-        dist_matrix: np.ndarray,
-        tour: bool = True
-        ) -> float:
+    """
+    Retorna a soma das distâncias para as cidades vizinhas.\n
+    Considera o caso em que a rota representa um tour (i.e. route[0] é vizinha de route[n-1]).
+    """
     lastpos = len(route) - 1
     city = route[pos]
     delta = 0.0
@@ -94,7 +80,7 @@ def swap_cities(
 
     Returns:
         float: retorna a nova distância total se `current_total_distance` foi provida. \n
-        None: se `current_total_distance` foi provida \n
+        None: se `current_total_distance` não foi provida \n
 
     Raises:
         ValueError: sse `current_total_distance` está definida então `dist_matrix` também deve estar.\n
@@ -102,7 +88,7 @@ def swap_cities(
     
     if (current_total_distance is None) != (dist_matrix is None):
         raise ValueError('Erro: current_total_distance deve estar definida sse dist_matrix está definida')
-    
+
     # Faz a inversão sem calcular distâncias
     if current_total_distance is None or dist_matrix is None:
         swap_positions(route, pos1, pos2)
@@ -111,13 +97,13 @@ def swap_cities(
     # Remove as cidades da rota e depois as adiciona nos lugares da inversão (contando os deltas em cada passo)
     # Obs: o erro que ocorre na fase de remoção no caso de posições adjacentes é compensado na fase de adição.
     new_total_distance = current_total_distance
-    new_total_distance += remove_city_distances(route, pos1, dist_matrix, tour)
-    new_total_distance += remove_city_distances(route, pos2, dist_matrix, tour)
+    new_total_distance += -(neighbors_distances(route, pos1, dist_matrix, tour))
+    new_total_distance += -(neighbors_distances(route, pos2, dist_matrix, tour))
 
     swap_positions(route, pos1, pos2)
 
-    new_total_distance += add_city_distances(route, pos1, dist_matrix, tour)
-    new_total_distance += add_city_distances(route, pos2, dist_matrix, tour)
+    new_total_distance += neighbors_distances(route, pos1, dist_matrix, tour)
+    new_total_distance += neighbors_distances(route, pos2, dist_matrix, tour)
 
     return new_total_distance
 
