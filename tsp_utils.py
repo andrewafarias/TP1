@@ -81,7 +81,7 @@ def are_adjacent(route: List[int], pos1: int, pos2:int, tour: bool = True) -> in
     -1 se pos2 estiver a esquerda de pos1 \n
     1 se pos2 estiver a direita de pos1 \n
     """
-    ret = False
+    ret = 0
     dif = pos2 - pos1
     
     if(abs(dif) == 1):
@@ -116,6 +116,11 @@ def swap_cities(
     if (current_total_distance is None) != (dist_matrix is None):
         raise ValueError('Erro: current_total_distance deve estar definida sse dist_matrix está definida')
 
+    # Em um tour com apenas duas cidades, a troca não altera a distância total.
+    if tour and len(route) <= 2 and current_total_distance is not None:
+        swap_positions(route, pos1, pos2)
+        return current_total_distance
+
     # Faz a inversão sem calcular distâncias
     if current_total_distance is None or dist_matrix is None:
         swap_positions(route, pos1, pos2)
@@ -123,22 +128,17 @@ def swap_cities(
 
     # === Remove as cidades da rota e depois as adiciona nos lugares da resultantes da troca (contando os deltas em cada passo) ===
 
-    ignore_pos1_edge = are_adjacent(route, pos1, pos2) #Se pos2 é vizinho de pos1 então retorna para que direção é
-
     new_total_distance = current_total_distance
+    pos1_adjacency_direction = are_adjacent(route, pos1, pos2) #Se pos2 é vizinho de pos1 então retorna para que direção é
 
-    # Se rota for de tamanho <= 2 ignora o cálculo de uma das cidades devido a serem vizinhas de ambos os lados
-    if not (ignore_pos1_edge and len(route) <= 2):
-        new_total_distance += -(neighbors_distances(route, pos1, dist_matrix, ignore_pos1_edge, tour))
-
+    # Se forem vizinhos, ignora a aresta compartilhada uma vez
+    new_total_distance += -(neighbors_distances(route, pos1, dist_matrix, pos1_adjacency_direction, tour))
     new_total_distance += -(neighbors_distances(route, pos2, dist_matrix, 0, tour))
 
     swap_positions(route, pos1, pos2)
     
-    # Se rota for de tamanho <=2 ignora o cálculo de uma das cidades devido a serem vizinhas de ambos os lados
-    if not (ignore_pos1_edge and len(route) <= 2):
-        new_total_distance += neighbors_distances(route, pos1, dist_matrix, ignore_pos1_edge, tour)
-
+    # Se forem vizinhos, ignroa a aresta compartilhada uma vez.    
+    new_total_distance += neighbors_distances(route, pos1, dist_matrix, pos1_adjacency_direction, tour)
     new_total_distance += neighbors_distances(route, pos2, dist_matrix, 0, tour)
 
     return new_total_distance
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     
     n: int = len(dist_matrix)
     permutation: List[int] = np.random.permutation(n).tolist()
-    route: List[int] = permutation[:4]
+    route: List[int] = [0, 1, 2, 3]
 
     print("Rota:", route)
     distance: float = calculate_total_distance(route, dist_matrix)
@@ -170,6 +170,7 @@ if __name__ == '__main__':
 
     print("Nova rota:", route)
     print(f"Nova distância: {new_distance:.2f}")
+    print(f"{calculate_total_distance(route, dist_matrix):.2f}")
 
 
 
