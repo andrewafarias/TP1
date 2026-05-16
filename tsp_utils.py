@@ -45,27 +45,54 @@ def neighbors_distances(
         route: List[int],
         pos: int,
         dist_matrix: np.ndarray,
+        ignore_edge: int = 0,
         tour: bool = True
         ) -> float:
     """
     Retorna a soma das distâncias para as cidades vizinhas.\n
     Considera o caso em que a rota representa um tour (i.e. route[0] é vizinha de route[n-1]).
+
+    Args:
+        ignore_edge: se < 0 ignora aresta a esquerda; se > 0 ignora a aresta a direita.
     """
     lastpos = len(route) - 1
     city = route[pos]
     delta = 0.0
-    # Calcula os deltas de uma adição; de forma modular se for tour.
-    if pos-1 >= 0:
-        delta += dist_matrix[route[pos-1], city]
-    elif tour:
-        delta += dist_matrix[route[lastpos], city]
-
-    if pos+1 <= lastpos:
-        delta += dist_matrix[city, route[pos+1]]
-    elif tour:
-        delta += dist_matrix[city, route[0]]
+    # Calcula a distância para a vizinha a esquerda se não estiver sendo ignorada.
+    if not (ignore_edge < 0):
+        if pos-1 >= 0:
+            delta += dist_matrix[route[pos-1], city]
+        elif tour:
+            delta += dist_matrix[route[lastpos], city]
+    
+    # Calcula a distância para a vizinha a direita se não estiver sendo ignorada.
+    if not (ignore_edge > 0):
+        if pos+1 <= lastpos:
+            delta += dist_matrix[city, route[pos+1]]
+        elif tour:
+            delta += dist_matrix[city, route[0]]
 
     return delta
+
+def are_adjacent(route: List[int], pos1: int, pos2:int, tour: bool = True) -> int:
+    """
+    Returns:
+    0 se não forem adjacentes \n
+    -1 se pos2 estiver a esquerda de pos1 \n
+    1 se pos2 estiver a direita de pos1 \n
+    """
+    ret = False
+    dif = pos2 - pos1
+    
+    if(abs(dif) == 1):
+        ret = dif
+    elif pos1 == 0 and pos2 == len(route)-1:
+        ret = -1
+    elif pos1 == len(route)-1 and pos2 == 0:
+        ret = 1
+
+    return ret
+
 
 def swap_cities(
         route: List[int],
@@ -76,7 +103,7 @@ def swap_cities(
         tour: bool = True
         ) -> Optional[float]:
     """
-    Faz a troca de duas cidades e retorna a nova distância da rota de forma ótima. \n
+    Faz a troca de duas cidades e retorna a nova distância da rota em O(1). \n
 
     Returns:
         float: retorna a nova distância total se `current_total_distance` foi provida. \n
@@ -94,16 +121,25 @@ def swap_cities(
         swap_positions(route, pos1, pos2)
         return None
 
-    # Remove as cidades da rota e depois as adiciona nos lugares da inversão (contando os deltas em cada passo)
-    # Obs: o erro que ocorre na fase de remoção no caso de posições adjacentes é compensado na fase de adição.
+    # === Remove as cidades da rota e depois as adiciona nos lugares da resultantes da troca (contando os deltas em cada passo) ===
+
+    ignore_pos1_edge = are_adjacent(route, pos1, pos2) #Se pos2 é vizinho de pos1 então retorna para que direção é
+
     new_total_distance = current_total_distance
-    new_total_distance += -(neighbors_distances(route, pos1, dist_matrix, tour))
-    new_total_distance += -(neighbors_distances(route, pos2, dist_matrix, tour))
+
+    # Se rota for de tamanho <= 2 ignora o cálculo de uma das cidades devido a serem vizinhas de ambos os lados
+    if not (ignore_pos1_edge and len(route) <= 2):
+        new_total_distance += -(neighbors_distances(route, pos1, dist_matrix, ignore_pos1_edge, tour))
+
+    new_total_distance += -(neighbors_distances(route, pos2, dist_matrix, 0, tour))
 
     swap_positions(route, pos1, pos2)
+    
+    # Se rota for de tamanho <=2 ignora o cálculo de uma das cidades devido a serem vizinhas de ambos os lados
+    if not (ignore_pos1_edge and len(route) <= 2):
+        new_total_distance += neighbors_distances(route, pos1, dist_matrix, ignore_pos1_edge, tour)
 
-    new_total_distance += neighbors_distances(route, pos1, dist_matrix, tour)
-    new_total_distance += neighbors_distances(route, pos2, dist_matrix, tour)
+    new_total_distance += neighbors_distances(route, pos2, dist_matrix, 0, tour)
 
     return new_total_distance
 
